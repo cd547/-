@@ -73,7 +73,7 @@ namespace 图片文字识别到文件名
             }
             else
             {
-                this.label1.Text = "订单编号：" + this.textBox1.Text.Substring(start + 5, 10);
+                this.label1.Text = "订单编号：" + this.textBox1.Text.Substring(start + 5, 10).Replace("〇", "0");
             }
             
            
@@ -170,7 +170,7 @@ namespace 图片文字识别到文件名
             int n = files.Count();
             for (int i = 0; i < n; i++)
             {
-                string ans = files[i];
+                string ans = files[i].Replace(path,"");
                 System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
                 sw.Start();
                 //识别图片文字
@@ -195,7 +195,7 @@ namespace 图片文字识别到文件名
                 }
                 else
                 {
-                    code = ocr_text.Substring(start + 5, 10);//更新
+                    code = ocr_text.Substring(start + 5, 10).Replace("〇", "0"); ;//更新
                     code1 = code;
                     ans += " >>订单编号：" + code;
                     num = 0;
