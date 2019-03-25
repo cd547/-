@@ -33,6 +33,21 @@ namespace 图片文字识别到文件名
             cH = Convert.ToInt32(this.textH.Text);
             codestart = Convert.ToInt32(this.textCodeStart.Text);
             panel2w= this.panel2.Width ;
+            InitListView();
+
+        }
+
+        private void InitListView()
+        {
+            this.listView1.View = View.Details;
+            this.listView1.FullRowSelect = true;
+            this.listView1.Columns.Add("序号", 40, HorizontalAlignment.Left);
+            this.listView1.Columns.Add("原始文件", 220, HorizontalAlignment.Left);
+            this.listView1.Columns.Add("识别码", 100, HorizontalAlignment.Left);
+            this.listView1.Columns.Add("耗时", 60, HorizontalAlignment.Left);
+            this.listView1.Columns.Add("准确度", 60, HorizontalAlignment.Left);
+
+
         }
 
         public int cX, cY, cW, cH;
@@ -252,6 +267,21 @@ namespace 图片文字识别到文件名
                 this.progressBar1.Step = 1;//设置没次增长多少
                 currentnum = 0;
 
+                this.listView1.BeginUpdate();   //数据更新，UI暂时挂起，直到EndUpdate绘制控件，可以有效避免闪烁并大大提高加载速度
+
+                for (int i = 0; i < filescount; i++)   //添加10行数据
+                {
+                    ListViewItem lvi = new ListViewItem();
+                    lvi.Text =(i+1).ToString();
+                    lvi.SubItems.Add(files[i].Replace(path, "")); 
+                    lvi.SubItems.Add("");
+                    lvi.SubItems.Add("");
+                    lvi.SubItems.Add("");
+                    this.listView1.Items.Add(lvi);
+                   
+                }
+                this.listView1.EndUpdate();  //结束数据处理，UI界面一次性绘制。
+
                 Thread thread = new Thread(() => showPic(files[currentnum]));
                 thread.Start();
 
@@ -436,8 +466,6 @@ namespace 图片文字识别到文件名
                 currentnum = files.Count();
 
                 MessageBox.Show("到底了");
-
-
                 this.label6.Text = (currentnum + 1).ToString();
                 this.textBox1.Text = null;
                 this.label1.Text = null;
@@ -491,7 +519,7 @@ namespace 图片文字识别到文件名
                 MessageBox.Show("文件未找到");
             }
         }
-
+        private static readonly object syncRoot = new object();
         public void pic_orc()
         {
             if (!Directory.Exists(path + "/new/"))
@@ -503,6 +531,7 @@ namespace 图片文字识别到文件名
 
             System.Diagnostics.Stopwatch sw1 = new System.Diagnostics.Stopwatch();
             sw1.Start();
+            int tempn = 0;//记录n
             for (int i = 0; i < n; i++)
             {
                 System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
@@ -603,20 +632,16 @@ namespace 图片文字识别到文件名
 
                 }
 
-                if (this.label1.InvokeRequired)//不同线程为true，所以这里是true
-                {
-                    BeginInvoke(new Action(() => {
-                        this.label1.Text = code;
-                    }));
-                }
+                
                 sw.Stop();
                 TimeSpan ts2 = sw.Elapsed;
 
                 string dettime = (ts2.TotalMilliseconds / 1000.0).ToString("0.00") + "秒";
+               
                 ans += " 耗时：" + dettime + "\r\n";
                 ocr_text = null;
 
-
+               
                 if (this.textBox2.InvokeRequired)//不同线程为true，所以这里是true
                 {
                     BeginInvoke(new Action(() => { this.textBox2.Text += ans; this.textBox2.SelectionStart = this.textBox2.TextLength; this.textBox2.ScrollToCaret(); }));
@@ -630,6 +655,29 @@ namespace 图片文字识别到文件名
                     BeginInvoke(new Action(() => { this.progressBar1.Value += this.progressBar1.Step; }));
                 }
                 dt.Rows.Add(files[i], code, dettime.ToString(), acc);
+                /*
+                lock (syncRoot)
+                {
+                    if (this.listView1.InvokeRequired)//不同线程为true，所以这里是true
+                    {
+                        BeginInvoke(new Action(() =>
+                        {
+
+                            this.listView1.Items[i].SubItems[2].Text = code;
+                            this.listView1.Items[i].SubItems[3].Text = dettime;
+                            this.listView1.Items[i].SubItems[4].Text = acc.ToString();
+
+                        }));
+                    }
+                }
+               */
+                if (this.label1.InvokeRequired)//不同线程为true，所以这里是true
+                {
+                    BeginInvoke(new Action(() => {
+                        this.label1.Text = code;
+                    }));
+                }
+
                 try
                 {
                     if (dt.Rows[i]["acc"].ToString() == "100" || dt.Rows[i]["acc"].ToString() == "0")
@@ -649,14 +697,33 @@ namespace 图片文字识别到文件名
                     File.AppendAllText(path + "/new/error.txt", "\r\n" + "复制" + dt.Rows[i]["url"].ToString().Replace(path, "") + " 到 " + dt.Rows[i]["code"].ToString() + ".jpg失败，" + exp.ToString());
                     needstop = true;
                 }
+
+
+                tempn = i+1;
+
                 //判断是否结束
                 if (needstop) {
                     MessageBox.Show("识别出错，将结束剩下的操作！");
                     needstop = false;
+                   
                     break;
                 }
             }
 
+            if (this.listView1.InvokeRequired)//不同线程为true，所以这里是true
+            {
+                BeginInvoke(new Action(() =>
+                {
+                    this.listView1.BeginUpdate();
+                    for (int i = 0; i < tempn; i++)
+                    {
+                        this.listView1.Items[i].SubItems[2].Text = dt.Rows[i]["code"].ToString();
+                        this.listView1.Items[i].SubItems[3].Text = dt.Rows[i]["time"].ToString(); ;
+                        this.listView1.Items[i].SubItems[4].Text = dt.Rows[i]["acc"].ToString();
+                    }
+                    this.listView1.EndUpdate();
+                }));
+            }
 
             if (this.button5.InvokeRequired)//不同线程为true，所以这里是true
             {
