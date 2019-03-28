@@ -33,6 +33,7 @@ namespace 图片文字识别到文件名
           //  cH = Convert.ToInt32(this.textH.Text);
            // codestart = Convert.ToInt32(this.textCodeStart.Text);
             panel2w = this.panel2.Width;
+            files = null;
             InitListView();
         }
         private void InitListView()
@@ -51,7 +52,7 @@ namespace 图片文字识别到文件名
         private string path = null;
         int codestart;
         bool needstop = false;
-        Bitmap bigbitmap;
+
         //等比例缩放图片
         private Bitmap ZoomImage(Bitmap bitmap, int destHeight, int destWidth)
         {
@@ -127,11 +128,11 @@ namespace 图片文字识别到文件名
 
                     //this.pictureBox1.Image=ZoomImage(img, this.pictureBox1.Height, this.pictureBox1.Width);
 
-
                     this.pictureBox1.Load(fn) ;
+                  
 
-                    // Graphics g = pictureBox1.CreateGraphics();
-
+                    // Graphics g = Graphics.FromImage(img);
+                    // g.FillRectangle(Brushes.Red, new Rectangle(0, 10, 100, 100));
 
 
                     // System.Drawing.Drawing2D.GraphicsPath gp = new System.Drawing.Drawing2D.GraphicsPath();
@@ -149,8 +150,9 @@ namespace 图片文字识别到文件名
                     // this.pictureBox1.Load(fn) ;
                     // g.Dispose();
 
+
                     img.Dispose();
-                    
+
                 }
                
             }
@@ -198,9 +200,12 @@ namespace 图片文字识别到文件名
         }
         private void button2_Click(object sender, EventArgs e)
         {
-            this.textBox1.Text = null;
-            this.label1.Text = null;
-            orconce(fn);
+            if (fn != null)
+            {
+                this.textBox1.Text = null;
+                this.label1.Text = null;
+                orconce(fn);
+            }
         }
         /// <summary>  
         /// 剪裁 -- 用GDI+   
@@ -636,10 +641,35 @@ namespace 图片文字识别到文件名
             */
         }
 
+        private void pictureBox1_Paint(object sender, PaintEventArgs e)
+        {
+            
+            if (fn != null||files!=null)
+            {
+                Graphics a = e.Graphics;
+                //4962*7013
+                //4962  w
+                //  ----=---
+                // 7013  h
+                // 
+                
+
+                 double r = (this.pictureBox1.Height / 7013.0);
+              
+                a.DrawRectangle(new Pen(Color.Red, 2), (int)((this.pictureBox1.Width - 4962 * r) / 2 + cX *r), (int)(cY*r), (int)(cW *r), (int)(cH *r));
+            }
+            
+          
+        }
+
         private void pictureBox1_Resize(object sender, EventArgs e)
         {
-           // this.pictureBox1.Image = null;
-            //this.pictureBox1.Image= ZoomImage(bigbitmap,this.pictureBox1.Height,this.pictureBox1.Width);
+            //this.pictureBox1.Refresh();
+        }
+
+        private void pictureBox1_SizeChanged(object sender, EventArgs e)
+        {
+           // this.pictureBox1.Refresh();
         }
 
         public void pic_orc()

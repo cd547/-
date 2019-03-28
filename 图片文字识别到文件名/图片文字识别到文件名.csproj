@@ -106,7 +106,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="bitbug_favicon.ico" />
+    <EmbeddedResource Include="bitbug_favicon.ico" />
     <Content Include="t.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
