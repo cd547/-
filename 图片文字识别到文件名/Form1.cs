@@ -51,6 +51,60 @@ namespace 图片文字识别到文件名
         private string path = null;
         int codestart;
         bool needstop = false;
+        Bitmap bigbitmap;
+        //等比例缩放图片
+        private Bitmap ZoomImage(Bitmap bitmap, int destHeight, int destWidth)
+        {
+            try
+            {
+                System.Drawing.Image sourImage = bitmap;
+                int width = 0, height = 0;
+                //按比例缩放           
+                int sourWidth = sourImage.Width;
+                int sourHeight = sourImage.Height;
+                if (sourHeight > destHeight || sourWidth > destWidth)
+                {
+                    if ((sourWidth * destHeight) > (sourHeight * destWidth))
+                    {
+                        width = destWidth;
+                        height = (destWidth * sourHeight) / sourWidth;
+                    }
+                    else
+                    {
+                        height = destHeight;
+                        width = (sourWidth * destHeight) / sourHeight;
+                    }
+                }
+                else
+                {
+                    width = sourWidth;
+                    height = sourHeight;
+                }
+                Bitmap destBitmap = new Bitmap(destWidth, destHeight);
+                Graphics g = Graphics.FromImage(destBitmap);
+                g.Clear(Color.Transparent);
+                //设置画布的描绘质量         
+                g.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                g.DrawImage(sourImage, new Rectangle((destWidth - width) / 2, (destHeight - height) / 2, width, height), 0, 0, sourImage.Width, sourImage.Height, GraphicsUnit.Pixel);
+                g.Dispose();
+                //设置压缩质量     
+                System.Drawing.Imaging.EncoderParameters encoderParams = new System.Drawing.Imaging.EncoderParameters();
+                long[] quality = new long[1];
+                quality[0] = 100;
+                System.Drawing.Imaging.EncoderParameter encoderParam = new System.Drawing.Imaging.EncoderParameter(System.Drawing.Imaging.Encoder.Quality, quality);
+                encoderParams.Param[0] = encoderParam;
+                sourImage.Dispose();
+                return destBitmap;
+            }
+            catch
+            {
+                return bitmap;
+            }
+        }
+
+
         private void button1_Click(object sender, EventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
@@ -62,24 +116,39 @@ namespace 图片文字识别到文件名
                 string extension = Path.GetExtension(fn);
                 if (extension == ".jpg")
                 {
+                    pictureBox1.Refresh();
+                    pictureBox2.Refresh();
                     Thread thread1 = new Thread(() => orconce(fn));
                     thread1.Start();
                     Bitmap img = new Bitmap(fn);
-                    /*
-                    Graphics g = Graphics.FromImage(img);
-                    System.Drawing.Drawing2D.GraphicsPath gp = new System.Drawing.Drawing2D.GraphicsPath();
-                    Rectangle rect = new Rectangle();
-                    rect.Width = cW;
-                    rect.Height = cH;
-                    rect.X = cX;
-                    rect.Y = cY;
-                    gp.AddRectangle(rect);
-                    g.DrawPath(Pens.Red, gp);
-                    g.Dispose();
-                    */
-                    this.pictureBox1.Load(fn) ;
+                    //bigbitmap = img;
                     this.pictureBox2.Image = BlodBitmap(Cut(img, cX, cY, cW, cH));
                     this.pictureBox2.Height = (int)this.pictureBox2.Width * cH / cW;
+
+                    //this.pictureBox1.Image=ZoomImage(img, this.pictureBox1.Height, this.pictureBox1.Width);
+
+
+                    this.pictureBox1.Load(fn) ;
+
+                    // Graphics g = pictureBox1.CreateGraphics();
+
+
+
+                    // System.Drawing.Drawing2D.GraphicsPath gp = new System.Drawing.Drawing2D.GraphicsPath();
+                    //Rectangle rect = new Rectangle();
+                    //rect.Width = cW;
+                    //rect.Height = cH;
+                    //rect.X = cX;
+                    //rect.Y = cY;
+
+                    //gp.AddRectangle(rect);
+                    //g.DrawPath(Pens.Blue, gp);
+                    // g.DrawImage(ZoomImage(img,this.pictureBox1.Height,this.pictureBox1.Width), 0, 0);
+                    // g.FillRectangle(Brushes.Red, new Rectangle(0, 10, 100, 100));
+
+                    // this.pictureBox1.Load(fn) ;
+                    // g.Dispose();
+
                     img.Dispose();
                     
                 }
@@ -565,6 +634,12 @@ namespace 图片文字识别到文件名
             cH = Convert.ToInt32(this.textH.Text);
             codestart = Convert.ToInt32(this.textCodeStart.Text);
             */
+        }
+
+        private void pictureBox1_Resize(object sender, EventArgs e)
+        {
+           // this.pictureBox1.Image = null;
+            //this.pictureBox1.Image= ZoomImage(bigbitmap,this.pictureBox1.Height,this.pictureBox1.Width);
         }
 
         public void pic_orc()
